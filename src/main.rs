@@ -13,7 +13,7 @@ fn main(){
     });
 
     println!("{}", encode(&header, &payload));
-    println!("{}", decode("eyJhZG1pbiI6InRydWUiLCJuYW1lIjoicmFuZG8ifQ"));
+    println!("{}", decode("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXIn0.eyJhZG1pbiI6InRydWUiLCJuYW1lIjoicmFuZG8ifQ."));
 }
 
 
@@ -31,8 +31,22 @@ fn encode(header: &Value, payload: &Value) -> String {
     unsigned_jwt
 }
 
-fn decode(jwt: &str) -> Value {
-    let decoded_bytes = general_purpose::URL_SAFE_NO_PAD.decode(jwt).unwrap();
+fn decode(jwt: &str) -> Value{
+    let mut parts = jwt.split('.');
+    let encoded_header = parts.next().unwrap();
+    let encoded_payload = parts.next().unwrap();
+
+    let header = decoder(encoded_header);
+    let payload = decoder(encoded_payload);
+
+    return json!({
+        "header": header,
+        "payload": payload
+    })
+}
+
+fn decoder(value: &str) -> Value{
+    let decoded_bytes = general_purpose::URL_SAFE_NO_PAD.decode(value).unwrap();
     let decoded_str = String::from_utf8(decoded_bytes).unwrap();
     let json_value: Value =  serde_json::from_str(&decoded_str).unwrap();
     json_value
