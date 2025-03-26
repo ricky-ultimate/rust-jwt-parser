@@ -25,11 +25,8 @@ pub fn jwt_verify_and_decode(jwt: String) -> Value {
         eprint!("Invalid jwt format");
         process::exit(0);
     }
-    let encoded_header = parts[0];
-    let encoded_payload = parts[2];
-
-    let header = utils::unb64(encoded_header);
-    let payload = utils::unb64(encoded_payload);
+    let header = utils::unb64(parts[0]);
+    let payload = utils::unb64(parts[1]);
 
     return json!({
         "header": header,
