@@ -1,10 +1,8 @@
-use serde_json::{json, Value};
 use crate::utils;
+use serde_json::{json, Value};
 use std::process;
 
-
 pub fn jwt_encode(header: &Value, payload: &Value) -> String {
-
     if !header.is_object() || !payload.is_object() {
         eprint!("header and payload must be json objects");
         process::exit(0);
@@ -16,16 +14,19 @@ pub fn jwt_encode(header: &Value, payload: &Value) -> String {
     format!("{}.{}.", encoded_header, encoded_payload)
 }
 
-
-pub fn jwt_verify_and_decode(jwt: String) -> Value{
-
+pub fn jwt_verify_and_decode(jwt: String) -> Value {
     if jwt.trim().is_empty() {
         eprint!("empty string detected");
         process::exit(0);
     }
-    let mut parts = jwt.split('.');
-    let encoded_header = parts.next().unwrap();
-    let encoded_payload = parts.next().unwrap();
+
+    let parts: Vec<_> = jwt.split('.').collect();
+    if parts.len() != 2 {
+        eprint!("Invalid jwt format");
+        process::exit(0);
+    }
+    let encoded_header = parts[0];
+    let encoded_payload = parts[2];
 
     let header = utils::unb64(encoded_header);
     let payload = utils::unb64(encoded_payload);
@@ -33,5 +34,5 @@ pub fn jwt_verify_and_decode(jwt: String) -> Value{
     return json!({
         "header": header,
         "payload": payload
-    })
+    });
 }
