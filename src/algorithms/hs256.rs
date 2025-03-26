@@ -1,11 +1,13 @@
 use serde_json::{json, Value};
 use crate::utils;
+use std::process;
 
 
 pub fn jwt_encode(header: &Value, payload: &Value) -> String {
 
     if !header.is_object() || !payload.is_object() {
-        panic!("header and payload must be json objects")
+        eprint!("header and payload must be json objects");
+        process::exit(0);
     }
 
     let encoded_header = utils::b64(header);
@@ -17,8 +19,9 @@ pub fn jwt_encode(header: &Value, payload: &Value) -> String {
 
 pub fn jwt_verify_and_decode(jwt: String) -> Value{
 
-    if jwt.is_empty() {
-        panic!("empty string detected")
+    if jwt.trim().is_empty() {
+        eprint!("empty string detected");
+        process::exit(0);
     }
     let mut parts = jwt.split('.');
     let encoded_header = parts.next().unwrap();
