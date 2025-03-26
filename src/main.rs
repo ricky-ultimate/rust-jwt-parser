@@ -20,7 +20,7 @@ fn main() {
     println!(
         "{}",
         hs256_decode(String::from(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6InRydWUiLCJuYW1lIjoicmFuZG8ifQ"
+            "eyJhbGciOiJIUzI1IiwidHlwIjoiSldUIn0.eyJhZG1pbiI6InRydWUiLCJuYW1lIjoicmFuZG8ifQ"
         ))
     );
 }
