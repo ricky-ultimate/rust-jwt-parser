@@ -26,6 +26,9 @@ pub fn jwt_verify_and_decode(jwt: String) -> Value {
         process::exit(0);
     }
     let header = utils::unb64(parts[0]);
+    if header["alg"] != "HS256" {
+        eprint!("Wrong algorithm: {}", header["alg"])
+    }
     let payload = utils::unb64(parts[1]);
 
     return json!({
