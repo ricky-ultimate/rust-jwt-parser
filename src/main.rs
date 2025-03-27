@@ -13,14 +13,14 @@ fn main() {
 
     let payload: Value = json!({
         "name": "rando",
-        "admin": "true"
+        "admin": true
     });
 
     println!("{}", hs256_encode(&header, &payload));
     println!(
         "{}",
         hs256_decode(String::from(
-            "eyJhbGciOiJIUzI1IiwidHlwIjoiSldUIn0.eyJhZG1pbiI6InRydWUiLCJuYW1lIjoicmFuZG8ifQ"
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwibmFtZSI6InJhbmRvIn0"
         ))
     );
 }
