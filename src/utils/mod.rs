@@ -2,9 +2,8 @@ use base64::{engine::general_purpose, Engine as _};
 use serde_json::Value;
 use std::process;
 
-pub fn b64(input: &Value) -> String {
-    let json_string = serde_json::to_string(&input).unwrap();
-    general_purpose::URL_SAFE_NO_PAD.encode(json_string.as_bytes())
+pub fn b64(input: &[u8] ) -> String {
+    general_purpose::URL_SAFE_NO_PAD.encode(input)
 }
 
 pub fn unb64(value: &str) -> Value {

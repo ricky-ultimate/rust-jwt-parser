@@ -1,15 +1,23 @@
 use crate::utils;
 use serde_json::{json, Value};
+use ring::hmac::{self, HMAC_SHA256};
 
-pub fn jwt_encode(header: &Value, payload: &Value) -> String {
+pub fn jwt_encode(header: &Value, payload: &Value, secret: String) -> String {
     if !header.is_object() || !payload.is_object() {
         utils::error_and_exit("header and payload must be json objects");
     }
 
-    let encoded_header = utils::b64(header);
-    let encoded_payload = utils::b64(payload);
+    let header_json = serde_json::to_string(header).expect("Failed to serialize header");
+    let encoded_header = utils::b64(header_json.as_bytes());
 
-    format!("{}.{}", encoded_header, encoded_payload)
+    let payload_json = serde_json::to_string(payload).expect("Failed to seialize payload");
+    let encoded_payload = utils::b64(payload_json.as_bytes());
+
+    let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
+
+    let signature = hs256(jwt_unprotected, secret);
+
+    format!("{}.{}.{}", encoded_header, encoded_payload, signature)
 }
 
 pub fn jwt_verify_and_decode(jwt: String) -> Value {
@@ -35,4 +43,11 @@ pub fn jwt_verify_and_decode(jwt: String) -> Value {
         "payload": payload,
         "valid" : true
     });
+}
+
+pub fn hs256(unsigned_jwt: String, secret: String) -> String {
+    let key = hmac::Key::new(HMAC_SHA256, secret.as_bytes());
+    let signature = hmac::sign(&key, &unsigned_jwt.as_bytes());
+
+    utils::b64(signature.as_ref())
 }
