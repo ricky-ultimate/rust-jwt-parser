@@ -8,7 +8,7 @@ pub enum JwtError {
     JsonError(#[from] serde_json::Error),
     #[error("Invalid base64 encoding")]
     Base64Error,
-    #[error("Invalid base64 encoding")]
+    #[error("Unsupported Algorithm: {0}")]
     UnsupportedAlgorithm(String),
     #[error("Signature verification failed")]
     InvalidSignature,
