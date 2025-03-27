@@ -15,12 +15,12 @@ pub fn jwt_encode(header: &Value, payload: &Value, secret: &str) -> String {
 
     let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
 
-    let signature = hs256(jwt_unprotected, secret);
+    let signature = hs256(&jwt_unprotected, secret);
 
     format!("{}.{}.{}", encoded_header, encoded_payload, signature)
 }
 
-pub fn jwt_verify_and_decode(jwt: String, secret: String) -> Value {
+pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Value {
     if jwt.trim().is_empty() || secret.trim().is_empty() {
         utils::error_and_exit("empty string detected");
     }
@@ -40,7 +40,7 @@ pub fn jwt_verify_and_decode(jwt: String, secret: String) -> Value {
     let jwt_unprotected = format!("{}.{}", parts[0], parts[1]);
 
 
-    let signature = hs256(jwt_unprotected, &secret);
+    let signature = hs256(&jwt_unprotected, &secret);
 
     let valid = signature == parts[2];
 
@@ -51,7 +51,7 @@ pub fn jwt_verify_and_decode(jwt: String, secret: String) -> Value {
     });
 }
 
-pub fn hs256(jwt_unprotected: String, secret: &str) -> String {
+pub fn hs256(jwt_unprotected: &str, secret: &str) -> String {
     let key = hmac::Key::new(HMAC_SHA256, secret.as_bytes());
     let signature = hmac::sign(&key, &jwt_unprotected.as_bytes());
 

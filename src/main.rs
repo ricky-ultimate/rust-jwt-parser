@@ -19,11 +19,9 @@ fn main() {
         "admin": true
     });
 
-    println!("{}", hs256_encode(&header, &payload, env::var("SECRET").expect("SECRET MUST BE SET")));
+    println!("{}", hs256_encode(&header, &payload, &env::var("SECRET").expect("SECRET MUST BE SET")));
     println!(
         "{}",
-        hs256_decode(String::from(
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwibmFtZSI6InJhbmRvIn0"
-        ))
+        hs256_decode("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwibmFtZSI6InJhbmRvIn0.eCY5rBwd1yfI1CMdGleyMSKs-7fiirfLvkph--Hp7eY", "some random secre")
     );
 }
