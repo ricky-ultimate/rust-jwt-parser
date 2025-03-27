@@ -1,54 +1,54 @@
-use crate::utils;
+use crate::utils::{self, error::JwtError};
 use serde_json::{json, Value};
 use ring::hmac::{self, HMAC_SHA256};
 
-pub fn jwt_encode(header: &Value, payload: &Value, secret: &str) -> String {
+pub fn jwt_encode(header: &Value, payload: &Value, secret: &str) -> Result<String, JwtError> {
     if !header.is_object() || !payload.is_object() {
         utils::error_and_exit("header and payload must be json objects");
     }
 
-    let header_json = serde_json::to_string(header).expect("Failed to serialize header");
-    let encoded_header = utils::b64(header_json.as_bytes());
+    let header_json = serde_json::to_string(header)?;
+    let payload_json = serde_json::to_string(payload)?;
 
-    let payload_json = serde_json::to_string(payload).expect("Failed to seialize payload");
+    let encoded_header = utils::b64(header_json.as_bytes());
     let encoded_payload = utils::b64(payload_json.as_bytes());
 
     let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
-
     let signature = hs256(&jwt_unprotected, secret);
 
-    format!("{}.{}.{}", encoded_header, encoded_payload, signature)
+    Ok(format!("{}.{}.{}", encoded_header, encoded_payload, signature))
 }
 
-pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Value {
+pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Result<Value, JwtError>{
     if jwt.trim().is_empty() || secret.trim().is_empty() {
-        utils::error_and_exit("empty string detected");
+        return Err(JwtError::InvalidFormat);
     }
 
     let parts: Vec<String> = jwt.split('.').map(String::from).collect();
     if parts.len() != 3 {
-        utils::error_and_exit("Invalid jwt format");
+       return Err(JwtError::InvalidFormat);
     }
 
-    let header: Value = serde_json::from_str(&utils::unb64(&parts[0])).unwrap();
+    let header_str = utils::unb64(&parts[0])?;
+    let header: Value = serde_json::from_str(&header_str)?;
+
     if header["alg"] != "HS256" {
-        let msg = format!("Wrong algorithm: {}", header["alg"]);
-        utils::error_and_exit(&msg);
+        return Err(JwtError::UnsupportedAlgorithm(header["alg"].to_string()));
     }
 
-    let payload: Value = serde_json::from_str(&utils::unb64(&parts[1])).unwrap() ;
+    let payload_str = utils::unb64(&parts[1])?;
+    let payload: Value = serde_json::from_str(&payload_str)?;
+
     let jwt_unprotected = format!("{}.{}", parts[0], parts[1]);
-
-
     let signature = hs256(&jwt_unprotected, &secret);
 
     let valid = signature == parts[2];
 
-    return json!({
+    Ok(json!({
         "header": header,
         "payload": payload,
         "valid" : valid
-    });
+    }))
 }
 
 pub fn hs256(jwt_unprotected: &str, secret: &str) -> String {
