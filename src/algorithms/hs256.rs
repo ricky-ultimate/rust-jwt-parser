@@ -47,7 +47,7 @@ pub fn jwt_verify_and_decode(jwt: String, secret: String) -> Value {
     return json!({
         "header": header,
         "payload": payload,
-        "valid" : true
+        "valid" : valid
     });
 }
 
