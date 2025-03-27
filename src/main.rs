@@ -19,16 +19,16 @@ fn main() {
         "admin": true
     });
 
-    println!(
-        "{:?}",
-        hs256_encode(
-            &header,
-            &payload,
-            &env::var("SECRET").expect("SECRET MUST BE SET")
-        )
-    );
-    println!(
-        "{:#?}",
-        hs256_decode("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwibmFtZSI6InJhbmRvIn0.eCY5rBwd1yfI1CMdGleyMSKs-7fiirfLvkph--Hp7eY", "some random secre")
-    );
+    let secret = env::var("SECRET").expect("SECRET MUST BE SET");
+
+    match hs256_encode(&header, &payload, &secret) {
+        Ok(token) => println!("jwt: {}", token),
+        Err(e) => eprintln!("{}", e),
+    }
+
+    let jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwibmFtZSI6InJhbmRvIn0.eCY5rBwd1yfI1CMdGleyMSKs-7fiirfLvkph--Hp7eY";
+    match hs256_decode(&jwt, &secret) {
+        Ok(decoded) => println!("Decoded JWT: {}", decoded),
+        Err(e) => eprintln!("Error decoding JWT: {}", e),
+    }
 }
