@@ -14,7 +14,7 @@ fn main() {
 
     let secret = env::var("SECRET").expect("SECRET MUST BE SET");
 
-    match jwt_sign(&payload, &secret, "HS25"){
+    match jwt_sign(&payload, &secret, "HS256"){
         Ok(token) => println!("{}", token),
         Err(e) => eprintln!("{}", e)
     }
