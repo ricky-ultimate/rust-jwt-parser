@@ -1,6 +1,6 @@
 use crate::utils::{self, error::JwtError};
-use serde_json::{json, Value};
 use ring::hmac::{self, HMAC_SHA256};
+use serde_json::{json, Value};
 
 pub fn jwt_encode(header: &Value, payload: &Value, secret: &str) -> Result<String, JwtError> {
     if !header.is_object() || !payload.is_object() {
@@ -16,17 +16,20 @@ pub fn jwt_encode(header: &Value, payload: &Value, secret: &str) -> Result<Strin
     let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
     let signature = hs256(&jwt_unprotected, secret);
 
-    Ok(format!("{}.{}.{}", encoded_header, encoded_payload, signature))
+    Ok(format!(
+        "{}.{}.{}",
+        encoded_header, encoded_payload, signature
+    ))
 }
 
-pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Result<Value, JwtError>{
+pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Result<Value, JwtError> {
     if jwt.trim().is_empty() || secret.trim().is_empty() {
         return Err(JwtError::InvalidFormat);
     }
 
     let parts: Vec<String> = jwt.split('.').map(String::from).collect();
     if parts.len() != 3 {
-       return Err(JwtError::InvalidFormat);
+        return Err(JwtError::InvalidFormat);
     }
 
     let header_str = utils::unb64(&parts[0])?;
