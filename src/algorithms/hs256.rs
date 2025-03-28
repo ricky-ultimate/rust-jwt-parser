@@ -36,7 +36,7 @@ pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Result<Value, JwtError>
     let header: Value = serde_json::from_str(&header_str)?;
 
     if header["alg"] != "HS256" {
-        return Err(JwtError::UnsupportedAlgorithm(header["alg"].to_string()));
+        return Err(JwtError::WrongAlgorithm(header["alg"].to_string()));
     }
 
     let payload_str = utils::unb64(&parts[1])?;

@@ -6,6 +6,6 @@ use serde_json::Value;
 pub fn verify(signed: &str, secret: &str, algorithm: &str) -> Result<Value, JwtError> {
     match algorithm {
         "HS256" => hs256_decode(signed, secret),
-        _ => Err(utils::error::JwtError::UnsupportedAlgorithm(algorithm.to_owned()))
+        _ => Err(utils::error::JwtError::WrongAlgorithm(algorithm.to_owned()))
     }
 }

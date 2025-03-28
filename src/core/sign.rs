@@ -9,6 +9,6 @@ use crate::utils::error::JwtError;
 pub fn sign(payload: &Value, secret: &str, algorithm: &str) -> Result<String, JwtError> {
     match algorithm {
         "HS256" => hs256_encode(&json!({"alg": "HS256", "typ":"JWT"}), payload, secret),
-        _ => Err(utils::error::JwtError::UnsupportedAlgorithm(algorithm.to_string())),
+        _ => Err(utils::error::JwtError::WrongAlgorithm(algorithm.to_string())),
     }
 }
