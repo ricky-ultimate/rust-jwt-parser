@@ -1,4 +1,5 @@
 use crate::utils::{self, error::JwtError};
+use base64::{engine::general_purpose, Engine as _};
 use ring::rand::SystemRandom;
 use ring::signature::{RsaKeyPair, RSA_PKCS1_SHA256};
 use serde_json::{json, Value};
@@ -33,8 +34,9 @@ fn pem_to_der(pem: &str) -> Result<Vec<u8>, JwtError> {
             .collect::<Vec<&str>>()
             .join("");
 
-        utils::unb64(&base64_part)
-            .map(|decoded_str| decoded_str.into_bytes())
+            general_purpose::STANDARD
+            .decode(base64_part)
+            .map_err(|_| JwtError::Base64Error)
     } else {
         Err(JwtError::InvalidPemFormat)
     }
