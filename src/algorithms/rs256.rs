@@ -1,7 +1,9 @@
 use crate::utils::{self, error::JwtError};
 use base64::{engine::general_purpose, Engine as _};
 use ring::rand::SystemRandom;
-use ring::signature::{RsaKeyPair, RSA_PKCS1_SHA256, UnparsedPublicKey, RSA_PKCS1_2048_8192_SHA256};
+use ring::signature::{
+    RsaKeyPair, UnparsedPublicKey, RSA_PKCS1_2048_8192_SHA256, RSA_PKCS1_SHA256,
+};
 use serde_json::{json, Value};
 
 pub fn rs256(jwt_unprotected: &str, private_key_pem: &str) -> Result<String, JwtError> {
@@ -34,7 +36,7 @@ fn pem_to_der(pem: &str) -> Result<Vec<u8>, JwtError> {
             .collect::<Vec<&str>>()
             .join("");
 
-            general_purpose::STANDARD
+        general_purpose::STANDARD
             .decode(base64_part)
             .map_err(|_| JwtError::Base64Error)
     } else {
@@ -42,7 +44,11 @@ fn pem_to_der(pem: &str) -> Result<Vec<u8>, JwtError> {
     }
 }
 
-pub fn jwt_encode(header: &Value, payload: &Value, private_key: &str) -> Result<String, JwtError> {
+pub fn jwt_encode(
+    header: &Value,
+    payload: &Value,
+    private_key_pem: &str,
+) -> Result<String, JwtError> {
     if !header.is_object() || !payload.is_object() {
         utils::error_and_exit("header and payload must be json objects");
     }
@@ -54,7 +60,7 @@ pub fn jwt_encode(header: &Value, payload: &Value, private_key: &str) -> Result<
     let encoded_payload = utils::b64(payload_json.as_bytes());
 
     let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
-    let signature = rs256(&jwt_unprotected, private_key)?;
+    let signature = rs256(&jwt_unprotected, private_key_pem)?;
 
     Ok(format!(
         "{}.{}.{}",
@@ -72,14 +78,16 @@ pub fn jwt_verify_and_decode(jwt: &str, public_key_pem: &str) -> Result<Value, J
         return Err(JwtError::InvalidFormat);
     }
 
-    let header_str = utils::unb64(&parts[0])?;
+    let header_str =
+        String::from_utf8(utils::unb64(&parts[0])?).map_err(|_| JwtError::Base64Error)?;
     let header: Value = serde_json::from_str(&header_str)?;
 
     if header["alg"] != "RS256" {
         return Err(JwtError::WrongAlgorithm(header["alg"].to_string()));
     }
 
-    let payload_str = utils::unb64(&parts[1])?;
+    let payload_str =
+        String::from_utf8(utils::unb64(&parts[1])?).map_err(|_| JwtError::Base64Error)?;
     let payload: Value = serde_json::from_str(&payload_str)?;
 
     let jwt_unprotected = format!("{}.{}", parts[0], parts[1]);
@@ -96,14 +104,16 @@ pub fn jwt_verify_and_decode(jwt: &str, public_key_pem: &str) -> Result<Value, J
 fn verify_rs256(jwt_unprotected: &str, signature: &str, public_key_pem: &str) -> bool {
     let signature = match utils::unb64(&signature) {
         Ok(signature) => signature,
-        Err(_) => return false
+        Err(_) => return false,
     };
 
     let public_key_der = match pem_to_der(&public_key_pem) {
         Ok(der) => der,
-        Err(_) => return false
+        Err(_) => return false,
     };
 
     let public_key = UnparsedPublicKey::new(&RSA_PKCS1_2048_8192_SHA256, public_key_der);
-    public_key.verify(jwt_unprotected.as_bytes(), &signature.into_bytes()).is_ok()
+    public_key
+        .verify(jwt_unprotected.as_bytes(), &signature)
+        .is_ok()
 }

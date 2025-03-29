@@ -32,14 +32,16 @@ pub fn jwt_verify_and_decode(jwt: &str, secret: &str) -> Result<Value, JwtError>
         return Err(JwtError::InvalidFormat);
     }
 
-    let header_str = utils::unb64(&parts[0])?;
+    let header_str =
+        String::from_utf8(utils::unb64(&parts[0])?).map_err(|_| JwtError::Base64Error)?;
     let header: Value = serde_json::from_str(&header_str)?;
 
     if header["alg"] != "HS256" {
         return Err(JwtError::WrongAlgorithm(header["alg"].to_string()));
     }
 
-    let payload_str = utils::unb64(&parts[1])?;
+    let payload_str =
+        String::from_utf8(utils::unb64(&parts[1])?).map_err(|_| JwtError::Base64Error)?;
     let payload: Value = serde_json::from_str(&payload_str)?;
 
     let jwt_unprotected = format!("{}.{}", parts[0], parts[1]);
