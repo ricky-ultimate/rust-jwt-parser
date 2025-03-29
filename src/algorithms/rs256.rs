@@ -3,8 +3,8 @@ use ring::rand::SystemRandom;
 use ring::signature::{RsaKeyPair, RSA_PKCS1_SHA256};
 use serde_json::{json, Value};
 
-pub fn rs256(jwt_unprotected: &str, private_key_pem: &str) -> String {
-    let private_key_der = pem_to_der(private_key_pem).expect("Failed to convert PEM to DER");
+pub fn rs256(jwt_unprotected: &str, private_key_pem: &str) -> Result<String, JwtError> {
+    let private_key_der = pem_to_der(private_key_pem)?;
 
     let private_key =
         RsaKeyPair::from_pkcs8(&private_key_der).expect("Invalid RSA private key format");
@@ -21,10 +21,10 @@ pub fn rs256(jwt_unprotected: &str, private_key_pem: &str) -> String {
         )
         .expect("RSA signing failed");
 
-    utils::b64(signature.as_ref())
+    Ok(utils::b64(signature.as_ref()))
 }
 
-fn pem_to_der(pem: &str) -> Result<Vec<u8>, &'static str> {
+fn pem_to_der(pem: &str) -> Result<Vec<u8>, JwtError> {
     let pem = pem.trim();
     if pem.starts_with("-----BEGIN") {
         let base64_part = pem
@@ -35,9 +35,8 @@ fn pem_to_der(pem: &str) -> Result<Vec<u8>, &'static str> {
 
         utils::unb64(&base64_part)
             .map(|decoded_str| decoded_str.into_bytes())
-            .map_err(|_| "Failed to decode base64")
     } else {
-        Err("Invalid PEM format")
+        Err(JwtError::InvalidPemFormat)
     }
 }
 
@@ -53,7 +52,7 @@ pub fn jwt_encode(header: &Value, payload: &Value, private_key: &str) -> Result<
     let encoded_payload = utils::b64(payload_json.as_bytes());
 
     let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
-    let signature = rs256(&jwt_unprotected, private_key);
+    let signature = rs256(&jwt_unprotected, private_key)?;
 
     Ok(format!(
         "{}.{}.{}",
@@ -82,7 +81,7 @@ pub fn jwt_verify_and_decode(jwt: &str, private_key: &str) -> Result<Value, JwtE
     let payload: Value = serde_json::from_str(&payload_str)?;
 
     let jwt_unprotected = format!("{}.{}", parts[0], parts[1]);
-    let signature = rs256(&jwt_unprotected, &private_key);
+    let signature = rs256(&jwt_unprotected, &private_key)?;
 
     let valid = signature == parts[2];
 
