@@ -73,7 +73,7 @@ pub fn jwt_verify_and_decode(jwt: &str, private_key: &str) -> Result<Value, JwtE
     let header_str = utils::unb64(&parts[0])?;
     let header: Value = serde_json::from_str(&header_str)?;
 
-    if header["alg"] != "HS256" {
+    if header["alg"] != "RS256" {
         return Err(JwtError::WrongAlgorithm(header["alg"].to_string()));
     }
 
