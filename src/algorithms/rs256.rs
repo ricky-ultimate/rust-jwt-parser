@@ -1,6 +1,7 @@
-use crate::utils;
+use crate::utils::{self, error::JwtError};
 use ring::rand::SystemRandom;
 use ring::signature::{RsaKeyPair, RSA_PKCS1_SHA256};
+use serde_json::Value;
 
 pub fn rs256(jwt_unprotected: &str, private_key_pem: &str) -> String {
     let private_key_der = pem_to_der(private_key_pem).expect("Failed to convert PEM to DER");
@@ -38,4 +39,24 @@ fn pem_to_der(pem: &str) -> Result<Vec<u8>, &'static str> {
     } else {
         Err("Invalid PEM format")
     }
+}
+
+pub fn jwt_encode(header: &Value, payload: &Value, secret: &str) -> Result<String, JwtError> {
+    if !header.is_object() || !payload.is_object() {
+        utils::error_and_exit("header and payload must be json objects");
+    }
+
+    let header_json = serde_json::to_string(header)?;
+    let payload_json = serde_json::to_string(payload)?;
+
+    let encoded_header = utils::b64(header_json.as_bytes());
+    let encoded_payload = utils::b64(payload_json.as_bytes());
+
+    let jwt_unprotected = format!("{}.{}", encoded_header, encoded_payload);
+    let signature = rs256(&jwt_unprotected, secret);
+
+    Ok(format!(
+        "{}.{}.{}",
+        encoded_header, encoded_payload, signature
+    ))
 }
