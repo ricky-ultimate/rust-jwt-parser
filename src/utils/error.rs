@@ -12,4 +12,8 @@ pub enum JwtError {
     WrongAlgorithm(String),
     #[error("Signature verification failed")]
     InvalidSignature,
+    #[error("Invalid PEM format")]
+    InvalidPemFormat,
+    #[error("Failed to convert PEM to DER")]
+    PemConvertError,
 }
